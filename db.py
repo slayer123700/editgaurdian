@@ -2,45 +2,44 @@ from pymongo import MongoClient
 from config import MONGO_URI
 
 client = MongoClient(MONGO_URI)
-db = client["edit_guardian_bot"]
-chats = db["chats"]
+db = client['editguardianbot']
 
-def is_logging_enabled(chat_id):
-    chat = chats.find_one({"chat_id": chat_id})
-    return chat.get("logging", False) if chat else False
+users_collection = db['users']
+chats_collection = db['chats']
+restricted_users_collection = db['restricted_users']
 
-def toggle_logging(chat_id):
-    chat = chats.find_one({"chat_id": chat_id})
-    new_status = not chat.get("logging", False) if chat else True
-    chats.update_one({"chat_id": chat_id}, {"$set": {"logging": new_status}}, upsert=True)
-    return new_status
+# Add or update a user
+def add_user(user_id):
+    users_collection.update_one(
+        {"user_id": user_id},
+        {"$set": {"user_id": user_id}},
+        upsert=True
+    )
 
-def save_chat(chat_id, chat_type):
-    if not chats.find_one({"chat_id": chat_id}):
-        chats.insert_one({"chat_id": chat_id, "type": chat_type, "logging": False, "delay": 5})
+# Add or update a chat (group)
+def add_chat(chat_id):
+    chats_collection.update_one(
+        {"chat_id": chat_id},
+        {"$set": {"chat_id": chat_id}},
+        upsert=True
+    )
 
-def get_stats():
-    groups = chats.count_documents({"type": "group"})
-    users = chats.count_documents({"type": "private"})
-    return groups, users
+# Get all user IDs
+def get_all_users():
+    return [user["user_id"] for user in users_collection.find({}, {"_id": 0})]
 
-def set_deletion_delay(chat_id, seconds):
-    chats.update_one({"chat_id": chat_id}, {"$set": {"delay": seconds}}, upsert=True)
-
-def get_deletion_delay(chat_id):
-    data = chats.find_one({"chat_id": chat_id})
-    return data.get("delay", 5)
-
+# Get all chat IDs
 def get_all_chats():
-    return list(chats.find({}))
-restricted_users = db["restricted"]
+    return [chat["chat_id"] for chat in chats_collection.find({}, {"_id": 0})]
 
+# Add restricted user
 def add_restricted_user(user_id):
-    restricted_users.update_one({"user_id": user_id}, {"$set": {"user_id": user_id}}, upsert=True)
+    restricted_users_collection.update_one(
+        {"user_id": user_id},
+        {"$set": {"user_id": user_id}},
+        upsert=True
+    )
 
-def remove_restricted_user(user_id):
-    restricted_users.delete_one({"user_id": user_id})
-
+# Get all restricted user IDs
 def get_restricted_users():
-    return [doc["user_id"] for doc in restricted_users.find({})]
-
+    return [user["user_id"] for user in restricted_users_collection.find({}, {"_id": 0})]
