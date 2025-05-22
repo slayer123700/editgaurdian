@@ -36,11 +36,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-sync def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# /start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     add_user(user.id)
     try:
-        with open("https://files.catbox.moe/n0qvwp.jpg", "rb") as photo:
+        with open("media/start.jpg", "rb") as photo:
             await update.message.reply_photo(
                 photo,
                 caption=(
@@ -55,8 +56,6 @@ sync def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ),
                 parse_mode="HTML"
             )
-    except:
-
 
 # /ping command
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
