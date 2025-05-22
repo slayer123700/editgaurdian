@@ -14,7 +14,6 @@ from telegram.ext import (
 )
 
 from db import (
-    add_user,
     add_group_if_not_exists,
     get_edit_delay,
     set_edit_delay,
