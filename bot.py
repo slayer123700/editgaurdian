@@ -13,9 +13,7 @@ from telegram.ext import (
     ChatMemberHandler
 )
 
-from db import (
-    is_group_exist,
-    add_group,  # ✅ Use this instead
+from db import add_group_if_not_exists as add_group
     add_user,
     get_user,
     get_all_groups,
