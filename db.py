@@ -29,4 +29,7 @@ def set_deletion_delay(chat_id, seconds):
 
 def get_deletion_delay(chat_id):
     data = chats.find_one({"chat_id": chat_id})
-    return data.get("delay", 5)  # default delay = 5s
+    return data.get("delay", 5)
+
+def get_all_chats():
+    return list(chats.find({}))
