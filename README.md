@@ -1,22 +1,21 @@
-# Telegram Edit Guardian Bot
+# ✨ Edit-Chan Bot 💮
 
-A simple Telegram bot that monitors edited messages in groups and logs the original content to prevent abuse or misinformation.
+A kawaii Telegram bot that watches over your edited messages and shows system stats with a dash of anime charm~ 🌸
 
-## Features
+---
 
-- Detects edited messages
-- Logs original and edited message
-- Admin-only controls (optional)
+## 🧠 Features
 
-## Requirements
+- 🔧 `/togglelogging` — Turn on/off edit message logging (admin only)
+- ⏳ `/ping` — Check bot uptime, CPU, RAM, and disk usage
+- 🧸 `/start` — Shows info, bot invite link, and support group button
+- 🌸 Logs message edits beautifully
+- 🧑‍💻 Built with `python-telegram-bot` and `psutil`
 
-- Python 3.7+
-- Telegram bot token
+---
 
-## Setup
+## 🚀 Getting Started
 
-1. Clone the repository:
+### 1. Clone the repo
 
 ```bash
-git clone https://github.com/yourusername/telegram-edit-guardian-bot.git
-cd telegram-edit-guardian-bot
