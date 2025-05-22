@@ -19,3 +19,4 @@ A kawaii Telegram bot that watches over your edited messages and shows system st
 ### 1. Clone the repo
 
 ```bash
+https://dashboard.heroku.com/new?template=https://github.com/slayer123700/editgaurdian
