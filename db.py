@@ -33,3 +33,14 @@ def get_deletion_delay(chat_id):
 
 def get_all_chats():
     return list(chats.find({}))
+restricted_users = db["restricted"]
+
+def add_restricted_user(user_id):
+    restricted_users.update_one({"user_id": user_id}, {"$set": {"user_id": user_id}}, upsert=True)
+
+def remove_restricted_user(user_id):
+    restricted_users.delete_one({"user_id": user_id})
+
+def get_restricted_users():
+    return [doc["user_id"] for doc in restricted_users.find({})]
+
