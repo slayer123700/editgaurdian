@@ -2,44 +2,35 @@ from pymongo import MongoClient
 from config import MONGO_URI
 
 client = MongoClient(MONGO_URI)
-db = client['editguardianbot']
+db = client.edit_guardian
 
-users_collection = db['users']
-chats_collection = db['chats']
-restricted_users_collection = db['restricted_users']
+async def add_user(user_id):
+    db.users.update_one({"user_id": user_id}, {"$set": {"user_id": user_id}}, upsert=True)
 
-# Add or update a user
-def add_user(user_id):
-    users_collection.update_one(
-        {"user_id": user_id},
-        {"$set": {"user_id": user_id}},
-        upsert=True
-    )
+async def add_chat(chat_id):
+    db.chats.update_one({"chat_id": chat_id}, {"$set": {"chat_id": chat_id}}, upsert=True)
 
-# Add or update a chat (group)
-def add_chat(chat_id):
-    chats_collection.update_one(
-        {"chat_id": chat_id},
-        {"$set": {"chat_id": chat_id}},
-        upsert=True
-    )
+async def get_all_users():
+    return [u["user_id"] for u in db.users.find()]
 
-# Get all user IDs
-def get_all_users():
-    return [user["user_id"] for user in users_collection.find({}, {"_id": 0})]
+async def get_all_chats():
+    return [c["chat_id"] for c in db.chats.find()]
 
-# Get all chat IDs
-def get_all_chats():
-    return [chat["chat_id"] for chat in chats_collection.find({}, {"_id": 0})]
+async def add_restricted_user(user_id):
+    db.restricted.update_one({"user_id": user_id}, {"$set": {"user_id": user_id}}, upsert=True)
 
-# Add restricted user
-def add_restricted_user(user_id):
-    restricted_users_collection.update_one(
-        {"user_id": user_id},
-        {"$set": {"user_id": user_id}},
-        upsert=True
-    )
+async def remove_restricted_user(user_id):
+    db.restricted.delete_one({"user_id": user_id})
 
-# Get all restricted user IDs
-def get_restricted_users():
-    return [user["user_id"] for user in restricted_users_collection.find({}, {"_id": 0})]
+async def is_user_restricted(user_id):
+    return db.restricted.find_one({"user_id": user_id}) is not None
+
+async def get_restricted_users():
+    return [u["user_id"] for u in db.restricted.find()]
+
+async def set_delay(chat_id, seconds):
+    db.delays.update_one({"chat_id": chat_id}, {"$set": {"seconds": seconds}}, upsert=True)
+
+async def get_delay(chat_id):
+    data = db.delays.find_one({"chat_id": chat_id})
+    return data["seconds"] if data else 5
