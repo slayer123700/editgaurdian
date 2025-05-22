@@ -1,149 +1,213 @@
-import logging
-import os
-import psutil
 import time
+import os
+import platform
+import psutil
 from datetime import datetime
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, ChatMemberUpdated
 from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler, filters,
-    ContextTypes, CallbackContext
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ContextTypes,
+    ChatMemberHandler,
 )
 from config import BOT_TOKEN, OWNER_ID, BOT_NAME, OWNER_USERNAME
 from db import (
-    add_user, add_chat, is_user_restricted, add_restricted_user, remove_restricted_user,
-    get_restricted_users, get_all_chats, get_all_users,
-    set_delay, get_delay
+    add_user,
+    add_group,
+    is_restricted,
+    add_restricted_user,
+    get_all_users,
+    get_all_chats,
+    get_edit_delay,
+    set_edit_delay,
 )
-
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 start_time = time.time()
 
-# /start
+
+# /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    await add_user(user.id)
-    text = (
-        f"👋 𝐇𝐞𝐲 {user.mention_html()}!\n\n"
-        "• ɪ'ᴍ ᴛʜᴇ ᴍᴏsᴛ ᴀᴅᴠᴀɴᴄᴇᴅ ᴛᴇʟᴇɢʀᴀᴍ ᴛᴇxᴛ ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛᴏʀ ʙᴏᴛ.\n"
-        "• ɪ sᴀғᴇɢᴜᴀʀᴅ ʏᴏᴜʀ ɢʀᴏᴜᴘs ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇᴛᴇᴄᴛɪɴɢ ᴀɴᴅ ᴅᴇʟᴇᴛɪɴɢ ᴇᴅɪᴛᴇᴅ ᴍᴇssᴀɢᴇs ᴀғᴛᴇʀ ᴀ sᴇᴛ ᴅᴇʟᴀʏ.\n\n"
-        "⚙️ ǫᴇʏ ʜɪɢʜʟɪɢʜᴛs:\n"
-        "• ᴅᴇʟᴀʏᴇᴅ ᴍᴇssᴀɢᴇ ᴅᴇʟᴇᴛɪᴏɴ sʏsᴛᴇᴍ\n"
-        "• ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ\n"
-        "• ᴘᴇʀᴍɪᴛ ᴛʀᴜsᴛᴇᴅ ᴜsᴇʀs\n"
-        "• ғᴜʟʟʏ ᴄᴜsᴛᴏᴍɪᴢᴀʙʟᴇ ᴅᴇʟᴇᴛɪᴏɴ ᴛɪᴍᴇʀ\n\n"
-        "➜ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴛᴏ ɢᴇᴛ sᴛᴀʀᴛᴇᴅ."
-    )
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("➕ Add me to your group", url=f"https://t.me/edit_chanbot?startgroup=true")]])
-    await update.message.reply_photo("https://i.ibb.co/k6yjVLKb/photo-2025-05-20-05-17-05-7506392631883071524.jpg", caption=text, reply_markup=keyboard, parse_mode="HTML")
+    add_user(user.id)
+    try:
+        with open("media/start.jpg", "rb") as photo:
+            await update.message.reply_photo(
+                photo,
+                caption=(
+                    f"👋 ʜᴇʏ {user.mention_html()},\n\n"
+                    "• ɪ'ᴍ ᴛʜᴇ ᴍᴏsᴛ ᴀᴅᴠᴀɴᴄᴇᴅ ᴛᴇʟᴇɢʀᴀᴍ ᴛᴇxᴛ ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛᴏʀ ʙᴏᴛ.\n"
+                    "• ɪ sᴀғᴇɢᴜᴀʀᴅ ʏᴏᴜʀ ɢʀᴏᴜᴘs ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇᴛᴇᴄᴛɪɴɢ ᴀɴᴅ ᴅᴇʟᴇᴛɪɴɢ ᴇᴅɪᴛᴇᴅ ᴍᴇssᴀɢᴇs ᴀғᴛᴇʀ ᴀ sᴇᴛ ᴅᴇʟᴀʏ.\n\n"
+                    "⚙️ ǫᴇʏ ʜɪɢʜʟɪɢʜᴛs:\n"
+                    "• ᴅᴇʟᴀʏᴇᴅ ᴍᴇssᴀɢᴇ ᴅᴇʟᴇᴛɪᴏɴ\n"
+                    "• ᴘᴇʀᴍɪᴛ ᴛʀᴜsᴛᴇᴅ ᴜsᴇʀs\n"
+                    "• ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ\n"
+                    "➜ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴛᴏ ɢᴇᴛ sᴛᴀʀᴛᴇᴅ."
+                ),
+                parse_mode="HTML"
+            )
+    except:
+        await update.message.reply_text("Welcome! Media missing. Bot is active.")
 
-# /ping
+
+# /ping command
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uptime = time.time() - start_time
-    usage = psutil.virtual_memory()
+    uptime = str(datetime.now() - datetime.fromtimestamp(start_time)).split('.')[0]
     cpu = psutil.cpu_percent()
-    disk = psutil.disk_usage('/')
-    text = (
-        f"👾 <b>{BOT_NAME} Status</b>\n"
-        f"👤 Owner: {OWNER_USERNAME}\n\n"
-        f"⏱ Uptime: {int(uptime)}s\n"
-        f"🧠 RAM: {usage.percent}%\n"
-        f"💾 Disk: {disk.percent}%\n"
-        f"⚙️ CPU: {cpu}%"
-    )
-    await update.message.reply_photo("https://i.ibb.co/k6yjVLKb/photo-2025-05-20-05-17-05-7506392631883071524.jpg", caption=text, parse_mode="HTML")
+    ram = psutil.virtual_memory().percent
+    disk = psutil.disk_usage('/').percent
 
-# /delay
+    try:
+        with open("media/ping.mp4", "rb") as video:
+            await update.message.reply_video(
+                video,
+                caption=(
+                    f"🤖 <b>{BOT_NAME}</b>\n\n"
+                    f"📡 <b>Uptime:</b> {uptime}\n"
+                    f"🖥 <b>CPU:</b> {cpu}%\n"
+                    f"💾 <b>RAM:</b> {ram}%\n"
+                    f"💽 <b>Disk:</b> {disk}%\n\n"
+                    f"👤 <b>Owner:</b> @{OWNER_USERNAME}"
+                ),
+                parse_mode="HTML"
+            )
+    except:
+        await update.message.reply_text(
+            f"{BOT_NAME} is online!\nUptime: {uptime}"
+        )
+
+
+# /delay command
 async def delay(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_chat.type != "private":
-        group_id = update.effective_chat.id
-        if context.args:
-            try:
-                seconds = int(context.args[0])
-                await set_delay(group_id, seconds)
-                await update.message.reply_text(f"🕒 Delay set to {seconds} seconds.")
-            except ValueError:
-                await update.message.reply_text("❗ Please enter a valid number of seconds.")
-        else:
-            seconds = await get_delay(group_id)
-            await update.message.reply_text(f"⏱ Current delay: {seconds} seconds.")
-    else:
-        await update.message.reply_text("❗ This command only works in groups.")
+    chat_id = update.effective_chat.id
+    delay = get_edit_delay(chat_id)
+    await update.message.reply_text(f"✏️ Current edit deletion delay: {delay} seconds.")
 
-# /broadcast
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != OWNER_ID:
-        return
-    if not context.args:
-        return await update.message.reply_text("Usage:\n/broadcast -user\n/broadcast -user -pin\n/broadcast (groups only)")
-    text = update.message.text.split(None, 1)[-1]
-    to_users = "-user" in context.args
-    to_pin = "-pin" in context.args
-    users = await get_all_users() if to_users else []
-    chats = await get_all_chats()
-    targets = users + chats if to_users else chats
-    for chat_id in targets:
-        try:
-            msg = await context.bot.send_message(chat_id, text)
-            if to_pin:
-                await context.bot.pin_chat_message(chat_id, msg.message_id)
-        except Exception:
-            continue
-    await update.message.reply_text("✅ Broadcast sent.")
 
-# /gdel
-async def gdel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != OWNER_ID:
-        return
-    if not context.args:
-        return await update.message.reply_text("Usage: /gdel user_id")
-    user_id = int(context.args[0])
-    await add_restricted_user(user_id)
-    await update.message.reply_text(f"🚫 Messages from {user_id} will now be deleted.")
-
-# /stats
+# /stats command
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID:
         return
-    users = len(await get_all_users())
-    chats = len(await get_all_chats())
-    await update.message.reply_photo("https://i.ibb.co/k6yjVLKb/photo-2025-05-20-05-17-05-7506392631883071524.jpg", caption=f"📊 Users: {users}\n👥 Groups: {chats}")
 
-# Handle edits
+    users = len(get_all_users())
+    groups = len(get_all_chats())
+    try:
+        with open("media/stats.jpg", "rb") as img:
+            await update.message.reply_photo(
+                img,
+                caption=f"📊 Stats\n\n👥 Users: {users}\n👥 Groups: {groups}",
+            )
+    except:
+        await update.message.reply_text(f"Users: {users}, Groups: {groups}")
+
+
+# /logs command
+async def logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id == OWNER_ID:
+        await update.message.reply_text("Logs not implemented.")
+
+
+# /broadcast command
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    text = update.message.text.split(maxsplit=1)
+    if len(text) < 2:
+        return await update.message.reply_text("Usage: /broadcast [-user] [-pin] <message>")
+
+    flags = text[0]
+    message = text[1]
+
+    users = get_all_users() if "-user" in flags else []
+    groups = get_all_chats()
+
+    for cid in users + groups:
+        try:
+            sent = await context.bot.send_message(cid, message)
+            if "-pin" in flags:
+                await sent.pin()
+        except:
+            continue
+
+    await update.message.reply_text("Broadcast sent.")
+
+
+# /gdel command
+async def gdel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    if not context.args:
+        return await update.message.reply_text("Usage: /gdel <user_id>")
+
+    try:
+        user_id = int(context.args[0])
+        add_restricted_user(user_id)
+        await update.message.reply_text(f"User {user_id} added to restricted list.")
+    except:
+        await update.message.reply_text("Invalid user ID.")
+
+
+# edited message handler
 async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.edited_message
-    chat_id = msg.chat_id
-    if await is_user_restricted(msg.from_user.id):
-        return await msg.delete()
-    delay = await get_delay(chat_id)
+    if not msg or not msg.text:
+        return
+
+    chat_id = msg.chat.id
+    delay = get_edit_delay(chat_id)
+
+    await context.bot.send_message(chat_id, "✏️ Edited message detected. Will be deleted soon.", reply_to_message_id=msg.message_id)
     await asyncio.sleep(delay)
-    try:
-        await msg.delete()
-    except Exception:
-        pass
+    await msg.delete()
 
-# Handle new groups
-async def new_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await add_chat(update.effective_chat.id)
 
-# Run bot
-def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+# restricted user message deletion
+async def monitor_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if is_restricted(update.effective_user.id):
+        try:
+            await update.message.delete()
+        except:
+            pass
+
+
+# bot join or user start alert
+async def joined(update: ChatMemberUpdated, context: ContextTypes.DEFAULT_TYPE):
+    if update.my_chat_member.new_chat_member.status == "member":
+        chat = update.effective_chat
+        add_group(chat.id)
+        await context.bot.send_message(OWNER_ID, f"Bot added to group: {chat.title} ({chat.id})")
+
+
+async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.chat.type == "private":
+        user = update.effective_user
+        add_user(user.id)
+        await context.bot.send_message(OWNER_ID, f"User started bot: @{user.username} ({user.id})")
+
+
+# Main function
+async def main():
+    app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ping", ping))
-    app.add_handler(CommandHandler("delay", delay))
+    app.add_handler(CommandHandler("stats", stats))
+    app.add_handler(CommandHandler("logs", logs))
     app.add_handler(CommandHandler("broadcast", broadcast))
     app.add_handler(CommandHandler("gdel", gdel))
-    app.add_handler(CommandHandler("stats", stats))
-    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_chat))
-    app.add_handler(MessageHandler(filters.UpdateType.EDITED_MESSAGE, handle_edit))
+    app.add_handler(CommandHandler("delay", delay))
 
-    app.run_polling()
+    app.add_handler(MessageHandler(filters.ALL, monitor_message))
+    app.add_handler(MessageHandler(filters.UpdateType.EDITED_MESSAGE, handle_edit))
+    app.add_handler(ChatMemberHandler(joined, ChatMemberHandler.MY_CHAT_MEMBER))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, started))
+
+    await app.run_polling()
+
 
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
-
