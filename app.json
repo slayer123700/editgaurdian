@@ -1,0 +1,42 @@
+{
+  "name": "Telegram-Edit-Guardian-Bot",
+  "description": "A Telegram bot that protects groups from edited message spam and helps moderate content.",
+  "repository": "https://github.com/yourusername/telegram-edit-guardian-bot",
+  "logo": "https://telegra.ph/file/example-image.jpg",
+  "keywords": [
+    "telegram",
+    "bot",
+    "edit-protection",
+    "python",
+    "moderation"
+  ],
+  "env": {
+    "BOT_TOKEN": {
+      "description": "Your bot token from @BotFather",
+      "required": true
+    },
+    "OWNER_ID": {
+      "description": "Your Telegram user ID to receive bot notifications and access admin commands.",
+      "required": true
+    },
+    "MONGO_URI": {
+      "description": "MongoDB URI to store user, group, and config data.",
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "addons": [],
+  "scripts": {
+    "postdeploy": "echo Bot deployed successfully!"
+  }
+}
