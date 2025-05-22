@@ -208,17 +208,11 @@ async def main():
     await app.run_polling()
 
 
-import asyncio
-
 if __name__ == "__main__":
-    try:
-        asyncio.get_event_loop().run_until_complete(main())
-    except RuntimeError as e:
-        if str(e) == "This event loop is already running":
-            print("Event loop already running, using alternative startup.")
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(main())
-        else:
-            raise
+    import asyncio
+
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()
+
 
