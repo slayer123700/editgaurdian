@@ -1,198 +1,158 @@
+import logging
 import os
-import time
 import psutil
-import platform
+import time
 from datetime import datetime
-from telegram import Update
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+    ApplicationBuilder, CommandHandler, MessageHandler, filters,
+    ContextTypes, CallbackContext
 )
-
+from config import BOT_TOKEN, OWNER_ID, BOT_NAME, OWNER_USERNAME
 from db import (
-    add_user, add_chat, get_bot_stats, get_delay, set_delay,
-    add_restricted_user, remove_restricted_user, get_restricted_users
+    add_user, add_chat, is_user_restricted, add_restricted_user, remove_restricted_user,
+    get_restricted_users, get_all_chats, get_all_users,
+    set_delay, get_delay
 )
 
-# === CONFIGURATION ===
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-OWNER_ID = int(os.getenv("OWNER_ID", "123456789"))  # Replace with your real Telegram ID
-ADMIN_IDS = [OWNER_ID]
-START_TIME = time.time()
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# ========== BASIC COMMANDS ==========
+start_time = time.time()
 
 # /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    chat = update.effective_chat
-
-    if chat.type == "private":
-        add_user(user.id)
-    else:
-        add_chat(chat.id)
-
-    caption = (
-        "🎀 *ʜᴇʏ ᴍᴀsᴛᴇʀ~!*\n\n"
+    await add_user(user.id)
+    text = (
+        f"👋 𝐇𝐞𝐲 {user.mention_html()}!\n\n"
         "• ɪ'ᴍ ᴛʜᴇ ᴍᴏsᴛ ᴀᴅᴠᴀɴᴄᴇᴅ ᴛᴇʟᴇɢʀᴀᴍ ᴛᴇxᴛ ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛᴏʀ ʙᴏᴛ.\n"
-        "• ɪ sᴀғᴇɢᴜᴀʀᴅ ʏᴏᴜʀ ɢʀᴏᴜᴘs ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇᴛᴇᴄᴛɪɴɢ ᴀɴᴅ ᴅᴇʟᴇᴛɪɴɢ ᴇᴅɪᴛᴇᴅ ᴍᴇssᴀɢᴇs.\n\n"
-        "➜ [➕ Add Me to Your Group](https://t.me/YourBotUsername?startgroup=true)\n"
-        "[🛠 Support Group](https://t.me/your_support_group)"
+        "• ɪ sᴀғᴇɢᴜᴀʀᴅ ʏᴏᴜʀ ɢʀᴏᴜᴘs ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇᴛᴇᴄᴛɪɴɢ ᴀɴᴅ ᴅᴇʟᴇᴛɪɴɢ ᴇᴅɪᴛᴇᴅ ᴍᴇssᴀɢᴇs ᴀғᴛᴇʀ ᴀ sᴇᴛ ᴅᴇʟᴀʏ.\n\n"
+        "⚙️ ǫᴇʏ ʜɪɢʜʟɪɢʜᴛs:\n"
+        "• ᴅᴇʟᴀʏᴇᴅ ᴍᴇssᴀɢᴇ ᴅᴇʟᴇᴛɪᴏɴ sʏsᴛᴇᴍ\n"
+        "• ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ\n"
+        "• ᴘᴇʀᴍɪᴛ ᴛʀᴜsᴛᴇᴅ ᴜsᴇʀs\n"
+        "• ғᴜʟʟʏ ᴄᴜsᴛᴏᴍɪᴢᴀʙʟᴇ ᴅᴇʟᴇᴛɪᴏɴ ᴛɪᴍᴇʀ\n\n"
+        "➜ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴛᴏ ɢᴇᴛ sᴛᴀʀᴛᴇᴅ."
     )
-    await update.message.reply_text(caption, parse_mode="Markdown")
-
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("➕ Add me to your group", url=f"https://t.me/{BOT_NAME}?startgroup=true")]])
+    await update.message.reply_photo("https://placehold.co/600x400?text=Start+Image", caption=text, reply_markup=keyboard, parse_mode="HTML")
 
 # /ping
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uptime = str(datetime.now() - datetime.fromtimestamp(START_TIME)).split('.')[0]
-    ram = psutil.virtual_memory().percent
+    uptime = time.time() - start_time
+    usage = psutil.virtual_memory()
     cpu = psutil.cpu_percent()
-    disk = psutil.disk_usage('/').percent
-
-    msg = (
-        f"🤖 *Bot:* `{platform.node()}`\n"
-        f"👤 *Owner:* `{OWNER_ID}`\n\n"
-        f"🕐 *Uptime:* `{uptime}`\n"
-        f"🧠 *RAM:* `{ram}%`\n"
-        f"⚙️ *CPU:* `{cpu}%`\n"
-        f"💽 *Disk:* `{disk}%`"
+    disk = psutil.disk_usage('/')
+    text = (
+        f"👾 <b>{BOT_NAME} Status</b>\n"
+        f"👤 Owner: {OWNER_USERNAME}\n\n"
+        f"⏱ Uptime: {int(uptime)}s\n"
+        f"🧠 RAM: {usage.percent}%\n"
+        f"💾 Disk: {disk.percent}%\n"
+        f"⚙️ CPU: {cpu}%"
     )
-    await update.message.reply_text(msg, parse_mode="Markdown")
-
-# ========== ADMIN / OWNER COMMANDS ==========
-
-# /stats
-async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in ADMIN_IDS:
-        return
-    users, chats = get_bot_stats()
-    await update.message.reply_text(f"👥 Users: `{users}`\n👥 Groups: `{chats}`", parse_mode="Markdown")
-
-# /broadcast
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in ADMIN_IDS:
-        return
-
-    text = update.message.text.split(None, 1)
-    if len(text) < 2:
-        return await update.message.reply_text("Usage: /broadcast [-user] [-pin] <message>")
-
-    message = text[1]
-    pin = "-pin" in message
-    to_users = "-user" in message
-    message = message.replace("-user", "").replace("-pin", "").strip()
-
-    users, chats = get_bot_stats()
-    count = 0
-
-    if not to_users:
-        for cid in chats:
-            try:
-                sent = await context.bot.send_message(cid, message)
-                if pin:
-                    await context.bot.pin_chat_message(cid, sent.message_id)
-                count += 1
-            except:
-                pass
-
-    if to_users:
-        for uid in users:
-            try:
-                await context.bot.send_message(uid, message)
-                count += 1
-            except:
-                pass
-
-    await update.message.reply_text(f"✅ Broadcast sent to {count} recipients.")
-
-# /gdel
-async def gdel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in ADMIN_IDS:
-        return await update.message.reply_text("❌ Not authorized.")
-
-    args = context.args
-    if len(args) != 2 or args[0] not in ["add", "remove"]:
-        return await update.message.reply_text("Usage:\n`/gdel add <user_id>`\n`/gdel remove <user_id>`", parse_mode="Markdown")
-
-    user_id = int(args[1])
-    if args[0] == "add":
-        add_restricted_user(user_id)
-        await update.message.reply_text(f"🚫 User `{user_id}` restricted.", parse_mode="Markdown")
-    else:
-        remove_restricted_user(user_id)
-        await update.message.reply_text(f"✅ User `{user_id}` unrestricted.", parse_mode="Markdown")
+    await update.message.reply_photo("https://placehold.co/600x400?text=Ping+Image", caption=text, parse_mode="HTML")
 
 # /delay
 async def delay(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    if context.args:
-        try:
-            sec = int(context.args[0])
-            set_delay(chat_id, sec)
-            return await update.message.reply_text(f"🕒 Delay set to `{sec}` seconds.")
-        except:
-            return await update.message.reply_text("❌ Invalid number.")
-    await update.message.reply_text(f"⏰ Current delay: `{get_delay(chat_id)}s`", parse_mode="Markdown")
-
-# ========== AUTO DELETE MONITOR ==========
-
-async def monitor_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg = update.message
-    user_id = msg.from_user.id
-    chat = update.effective_chat
-
-    if chat.type in ["group", "supergroup"]:
-        restricted = get_restricted_users()
-        if user_id in restricted:
+    if update.effective_chat.type != "private":
+        group_id = update.effective_chat.id
+        if context.args:
             try:
-                await msg.delete()
-            except:
-                pass
+                seconds = int(context.args[0])
+                await set_delay(group_id, seconds)
+                await update.message.reply_text(f"🕒 Delay set to {seconds} seconds.")
+            except ValueError:
+                await update.message.reply_text("❗ Please enter a valid number of seconds.")
+        else:
+            seconds = await get_delay(group_id)
+            await update.message.reply_text(f"⏱ Current delay: {seconds} seconds.")
+    else:
+        await update.message.reply_text("❗ This command only works in groups.")
 
-# ========== NOTIFICATIONS TO OWNER ==========
+# /broadcast
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        return
+    if not context.args:
+        return await update.message.reply_text("Usage:\n/broadcast -user\n/broadcast -user -pin\n/broadcast (groups only)")
+    text = update.message.text.split(None, 1)[-1]
+    to_users = "-user" in context.args
+    to_pin = "-pin" in context.args
+    users = await get_all_users() if to_users else []
+    chats = await get_all_chats()
+    targets = users + chats if to_users else chats
+    for chat_id in targets:
+        try:
+            msg = await context.bot.send_message(chat_id, text)
+            if to_pin:
+                await context.bot.pin_chat_message(chat_id, msg.message_id)
+        except Exception:
+            continue
+    await update.message.reply_text("✅ Broadcast sent.")
 
-async def notify_private_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    if update.effective_chat.type == "private":
-        message = (
-            f"📥 *New Start!*\n"
-            f"👤 Username: @{user.username or 'N/A'}\n"
-            f"🆔 ID: `{user.id}`\n"
-            f"📩 Name: {user.full_name}"
-        )
-        await context.bot.send_message(chat_id=OWNER_ID, text=message, parse_mode="Markdown")
+# /gdel
+async def gdel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        return
+    if not context.args:
+        return await update.message.reply_text("Usage: /gdel user_id")
+    user_id = int(context.args[0])
+    await add_restricted_user(user_id)
+    await update.message.reply_text(f"🚫 Messages from {user_id} will now be deleted.")
 
-async def notify_group_join(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat = update.effective_chat
-    user = update.effective_user
+# /logs
+async def logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        return
+    if os.path.exists("logs.txt"):
+        await update.message.reply_document("logs.txt")
+    else:
+        await update.message.reply_text("No logs found.")
 
-    if update.message.new_chat_members:
-        for member in update.message.new_chat_members:
-            if member.id == context.bot.id:
-                msg = (
-                    f"➕ *Bot Added to Group!*\n"
-                    f"🏘 Group: {chat.title}\n"
-                    f"🆔 Group ID: `{chat.id}`\n"
-                    f"👤 Added by: @{user.username or 'N/A'} ({user.id})"
-                )
-                await context.bot.send_message(chat_id=OWNER_ID, text=msg, parse_mode="Markdown")
+# /stats
+async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        return
+    users = len(await get_all_users())
+    chats = len(await get_all_chats())
+    await update.message.reply_photo("https://placehold.co/600x400?text=Stats", caption=f"📊 Users: {users}\n👥 Groups: {chats}")
 
-# ========== MAIN ==========
+# Handle edits
+async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = update.edited_message
+    chat_id = msg.chat_id
+    if await is_user_restricted(msg.from_user.id):
+        return await msg.delete()
+    delay = await get_delay(chat_id)
+    await asyncio.sleep(delay)
+    try:
+        await msg.delete()
+    except Exception:
+        pass
 
-if __name__ == "__main__":
+# Handle new groups
+async def new_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await add_chat(update.effective_chat.id)
+
+# Run bot
+def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Commands
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ping", ping))
-    app.add_handler(CommandHandler("stats", stats))
     app.add_handler(CommandHandler("delay", delay))
     app.add_handler(CommandHandler("broadcast", broadcast))
     app.add_handler(CommandHandler("gdel", gdel))
+    app.add_handler(CommandHandler("logs", logs))
+    app.add_handler(CommandHandler("stats", stats))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_chat))
+    app.add_handler(MessageHandler(filters.UpdateType.EDITED_MESSAGE, handle_edit))
 
-    # Notification and monitoring
-    app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, notify_private_start))
-    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, notify_group_join))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.UpdateType.EDITED_MESSAGE, monitor_messages))
-
-    print("🚀 Bot is running.")
     app.run_polling()
+
+if __name__ == "__main__":
+    import asyncio
+    main()
