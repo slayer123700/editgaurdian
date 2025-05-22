@@ -1,39 +1,74 @@
-from pymongo import MongoClient
-from config import MONGO_URI
+import motor.motor_asyncio
+import os
 
-client = MongoClient(MONGO_URI)
+# MongoDB connection
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URL)
 db = client["edit_guardian_bot"]
 
-users_col = db["users"]
-groups_col = db["groups"]
-restricted_col = db["restricted"]
-settings_col = db["settings"]
+# Collections
+groups_collection = db["groups"]
+users_collection = db["users"]
+banned_users_collection = db["banned_users"]
+broadcast_collection = db["broadcast_logs"]
 
-# User Functions
-def add_user(user_id):
-    users_col.update_one({"_id": user_id}, {"$set": {"_id": user_id}}, upsert=True)
+# Group-related functions
+async def add_group_if_not_exists(group_id, group_name=None):
+    existing = await groups_collection.find_one({"group_id": group_id})
+    if not existing:
+        await groups_collection.insert_one({
+            "group_id": group_id,
+            "group_name": group_name or "Unknown",
+            "delay": 5  # default delay in seconds
+        })
 
-def get_all_users():
-    return [doc["_id"] for doc in users_col.find()]
+async def is_group_exist(group_id):
+    group = await groups_collection.find_one({"group_id": group_id})
+    return group is not None
 
-# Group Functions
-def add_group(chat_id):
-    groups_col.update_one({"_id": chat_id}, {"$set": {"_id": chat_id}}, upsert=True)
+async def get_edit_delay(group_id):
+    group = await groups_collection.find_one({"group_id": group_id})
+    return group.get("delay", 5) if group else 5
 
-def get_all_chats():
-    return [doc["_id"] for doc in groups_col.find()]
+async def set_edit_delay(group_id, delay: int):
+    await groups_collection.update_one(
+        {"group_id": group_id},
+        {"$set": {"delay": delay}},
+        upsert=True
+    )
 
-# Restriction Functions
-def add_restricted_user(user_id):
-    restricted_col.update_one({"_id": user_id}, {"$set": {"_id": user_id}}, upsert=True)
+async def get_all_groups():
+    return groups_collection.find()
 
-def is_restricted(user_id):
-    return restricted_col.find_one({"_id": user_id}) is not None
+# User-related functions
+async def add_user_if_not_exists(user_id, name=None):
+    existing = await users_collection.find_one({"user_id": user_id})
+    if not existing:
+        await users_collection.insert_one({
+            "user_id": user_id,
+            "name": name or "Unknown"
+        })
 
-# Edit Delay Settings
-def get_edit_delay(chat_id):
-    data = settings_col.find_one({"_id": chat_id})
-    return data.get("delay", 5) if data else 5
+async def get_all_users():
+    return users_collection.find()
 
-def set_edit_delay(chat_id, delay):
-    settings_col.update_one({"_id": chat_id}, {"$set": {"delay": delay}}, upsert=True)
+# Banned users
+async def is_user_banned(user_id):
+    return await banned_users_collection.find_one({"user_id": user_id}) is not None
+
+async def ban_user(user_id):
+    await banned_users_collection.update_one(
+        {"user_id": user_id},
+        {"$set": {"user_id": user_id}},
+        upsert=True
+    )
+
+async def unban_user(user_id):
+    await banned_users_collection.delete_one({"user_id": user_id})
+
+# Broadcast logging
+async def log_broadcast(user_id, message_id):
+    await broadcast_collection.insert_one({
+        "user_id": user_id,
+        "message_id": message_id
+    })
