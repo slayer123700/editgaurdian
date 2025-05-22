@@ -103,15 +103,6 @@ async def gdel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await add_restricted_user(user_id)
     await update.message.reply_text(f"🚫 Messages from {user_id} will now be deleted.")
 
-# /logs
-async def logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != OWNER_ID:
-        return
-    if os.path.exists("logs.txt"):
-        await update.message.reply_document("logs.txt")
-    else:
-        await update.message.reply_text("No logs found.")
-
 # /stats
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID:
