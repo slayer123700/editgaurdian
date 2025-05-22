@@ -36,22 +36,55 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("• ɪ'ᴍ ᴛʜᴇ ᴍᴏsᴛ ᴀᴅᴠᴀɴᴄᴇᴅ ᴛᴇʟᴇɢʀᴀᴍ ᴛᴇxᴛ ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛᴏʀ ʙᴏᴛ.
-• ɪ sᴀғᴇɢᴜᴀʀᴅ ʏᴏᴜʀ ɢʀᴏᴜᴘs ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇᴛᴇᴄᴛɪɴɢ ᴀɴᴅ ᴅᴇʟᴇᴛɪɴɢ ᴇᴅɪᴛᴇᴅ ᴍᴇssᴀɢᴇs ᴀғᴛᴇʀ ᴀ sᴇᴛ ᴅᴇʟᴀʏ.
+sync def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    add_user(user.id)
+    try:
+        with open("https://files.catbox.moe/n0qvwp.jpg", "rb") as photo:
+            await update.message.reply_photo(
+                photo,
+                caption=(
+                    f"👋 ʜᴇʏ {user.mention_html()},\n\n"
+                    "• ɪ'ᴍ ᴛʜᴇ ᴍᴏsᴛ ᴀᴅᴠᴀɴᴄᴇᴅ ᴛᴇʟᴇɢʀᴀᴍ ᴛᴇxᴛ ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛᴏʀ ʙᴏᴛ.\n"
+                    "• ɪ sᴀғᴇɢᴜᴀʀᴅ ʏᴏᴜʀ ɢʀᴏᴜᴘs ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇᴛᴇᴄᴛɪɴɢ ᴀɴᴅ ᴅᴇʟᴇᴛɪɴɢ ᴇᴅɪᴛᴇᴅ ᴍᴇssᴀɢᴇs ᴀғᴛᴇʀ ᴀ sᴇᴛ ᴅᴇʟᴀʏ.\n\n"
+                    "⚙️ ǫᴇʏ ʜɪɢʜʟɪɢʜᴛs:\n"
+                    "• ᴅᴇʟᴀʏᴇᴅ ᴍᴇssᴀɢᴇ ᴅᴇʟᴇᴛɪᴏɴ\n"
+                    "• ᴘᴇʀᴍɪᴛ ᴛʀᴜsᴛᴇᴅ ᴜsᴇʀs\n"
+                    "• ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ\n"
+                    "➜ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴛᴏ ɢᴇᴛ sᴛᴀʀᴛᴇᴅ."
+                ),
+                parse_mode="HTML"
+            )
+    except:
+        await update.message.reply_text("Welcome! Media missing. Bot is active.")d)
 
-⚙️ ǫᴇʏ ʜɪɢʜʟɪɢʜᴛs:
-• ᴅᴇʟᴀʏᴇᴅ ᴍᴇssᴀɢᴇ ᴅᴇʟᴇᴛɪᴏɴ sʏsᴛᴇᴍ
-• ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ
-• ᴘᴇʀᴍɪᴛ ᴛʀᴜsᴛᴇᴅ ᴜsᴇʀs
-• ғᴜʟʟʏ ᴄᴜsᴛᴏᴍɪᴢᴀʙʟᴇ ᴅᴇʟᴇᴛɪᴏɴ ᴛɪᴍᴇʀ
 
-➜ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴛᴏ ɢᴇᴛ sᴛᴀʀᴛᴇᴅ.")
-    await add_user(update.effective_user.id)
-
-
+# /ping command
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🏓 Pong!")
+    uptime = str(datetime.now() - datetime.fromtimestamp(start_time)).split('.')[0]
+    cpu = psutil.cpu_percent()
+    ram = psutil.virtual_memory().percent
+    disk = psutil.disk_usage('/').percent
+
+    try:
+        with open("https://files.catbox.moe/urlx65.mp4", "rb") as video:
+            await update.message.reply_video(
+                video,
+                caption=(
+                    f"🤖 <b>{BOT_NAME}</b>\n\n"
+                    f"📡 <b>Uptime:</b> {uptime}\n"
+                    f"🖥 <b>CPU:</b> {cpu}%\n"
+                    f"💾 <b>RAM:</b> {ram}%\n"
+                    f"💽 <b>Disk:</b> {disk}%\n\n"
+                    f"👤 <b>Owner:</b> @{OWNER_USERNAME}"
+                ),
+                parse_mode="HTML"
+            )
+    except:
+        await update.message.reply_text(
+            f"{BOT_NAME} is online!\nUptime: {uptime}"
+        )
+
 
 
 async def logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
