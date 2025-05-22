@@ -137,13 +137,11 @@ def main():
     app.add_handler(CommandHandler("delay", delay))
     app.add_handler(CommandHandler("broadcast", broadcast))
     app.add_handler(CommandHandler("gdel", gdel))
-    app.add_handler(CommandHandler("logs", logs))
     app.add_handler(CommandHandler("stats", stats))
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_chat))
     app.add_handler(MessageHandler(filters.UpdateType.EDITED_MESSAGE, handle_edit))
 
     app.run_polling()
 
-if __name__ == "__main__":
     import asyncio
     main()
