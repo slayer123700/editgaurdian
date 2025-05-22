@@ -14,14 +14,16 @@ from telegram.ext import (
 )
 
 from db import (
+    is_group_exist,
+    add_group,  # ✅ Use this instead
     add_user,
+    get_user,
+    get_all_groups,
     get_all_users,
-    get_edit_delay as get_group_delay,
-    set_edit_delay as set_group_delay,
-    add_group_if_not_exists,
-    log_message,
-    get_logs
+    set_edit_delay,
+    get_edit_delay,
 )
+
 
 TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = int(os.getenv("OWNER_ID", "0"))
