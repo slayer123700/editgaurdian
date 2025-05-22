@@ -2,6 +2,7 @@ import os
 import psutil
 import platform
 import time
+import asyncio
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     ApplicationBuilder,
@@ -10,38 +11,43 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
-
-from db import is_logging_enabled, toggle_logging, save_chat, get_stats
+from db import (
+    is_logging_enabled, toggle_logging,
+    save_chat, get_stats,
+    set_deletion_delay, get_deletion_delay
+)
 from config import TOKEN, ADMIN_IDS, BOT_NAME, BOT_OWNER_USERNAME, SUPPORT_GROUP_LINK
 
 start_time = time.time()
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     user = update.effective_user
-    save_chat(chat.id, chat.type)  # Track all chats in MongoDB
+    save_chat(chat.id, chat.type)
 
-    # 🌸 Optional: Send start video
     try:
         await update.message.reply_video(
-            video="start_video.mp4",  # Replace with your file or URL
-            caption=f"Konnichiwa, {user.first_name}-senpai!~ 💖",
+            video="start_video.mp4",  # optional
+            caption=f"Konnichiwa, {user.first_name}-senpai! 💖"
         )
-    except Exception as e:
-        print("Start video error:", e)
+    except:
+        pass
 
     keyboard = [
         [InlineKeyboardButton("➕ Add Me to Your Group", url=f"https://t.me/{context.bot.username}?startgroup=true")],
         [InlineKeyboardButton("💬 Support", url=SUPPORT_GROUP_LINK)]
     ]
+
     await update.message.reply_text(
-        f"I'm *{BOT_NAME}*, your cute little edit guardian bot~ 🍥\n"
-        f"I'll watch for edited messages and protect your chat! ✨\n\n"
-        f"Use /togglelogging to enable/disable logging in your group.\n"
-        f"Use /ping to see my system stats!\n",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode="Markdown"
+        "• ɪ'ᴍ ᴛʜᴇ ᴍᴏsᴛ ᴀᴅᴠᴀɴᴄᴇᴅ ᴛᴇʟᴇɢʀᴀᴍ ᴛᴇxᴛ ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛᴏʀ ʙᴏᴛ.\n"
+        "• ɪ sᴀғᴇɢᴜᴀʀᴅ ʏᴏᴜʀ ɢʀᴏᴜᴘs ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴅᴇᴛᴇᴄᴛɪɴɢ ᴀɴᴅ ᴅᴇʟᴇᴛɪɴɢ ᴇᴅɪᴛᴇᴅ ᴍᴇssᴀɢᴇs ᴀғᴛᴇʀ ᴀ sᴇᴛ ᴅᴇʟᴀʏ.\n\n"
+        "⚙️ ǫᴇʏ ʜɪɢʜʟɪɢʜᴛs:\n"
+        "• ᴅᴇʟᴀʏᴇᴅ ᴍᴇssᴀɢᴇ ᴅᴇʟᴇᴛɪᴏɴ sʏsᴛᴇᴍ\n"
+        "• ᴄᴏᴘʏʀɪɢʜᴛ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ\n"
+        "• ᴘᴇʀᴍɪᴛ ᴛʀᴜsᴛᴇᴅ ᴜsᴇʀs\n"
+        "• ғᴜʟʟʏ ᴄᴜsᴛᴏᴍɪᴢᴀʙʟᴇ ᴅᴇʟᴇᴛɪᴏɴ ᴛɪᴍᴇʀ\n\n"
+        "➜ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴛᴏ ɢᴇᴛ sᴛᴀʀᴛᴇᴅ.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
@@ -52,14 +58,13 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     disk = psutil.disk_usage('/').percent
     system_info = platform.system() + " " + platform.release()
 
-    # 🎥 Optional: Ping video
     try:
         await update.message.reply_video(
-            video="ping_video.mp4",  # Replace with your file or URL
+            video="ping_video.mp4",
             caption="Here’s my status, senpai~ 💫"
         )
-    except Exception as e:
-        print("Ping video error:", e)
+    except:
+        pass
 
     text = (
         f"🌸 *{BOT_NAME}* is online~\n\n"
@@ -70,21 +75,18 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🧮 *CPU*: `{cpu}%`\n\n"
         f"👤 *Owner*: @{BOT_OWNER_USERNAME}"
     )
-
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def toggle_logging(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     user = update.effective_user
-
     if user.id not in ADMIN_IDS:
-        await update.message.reply_text("Gomenasai~ 😿 Only my master(s) can do this!")
+        await update.message.reply_text("Only my master can toggle logging, nya~ 😼")
         return
 
     new_status = toggle_logging(chat.id)
-    status_text = "enabled~ 💖" if new_status else "disabled~ 😿"
-    await update.message.reply_text(f"Logging has been {status_text}", parse_mode="Markdown")
+    await update.message.reply_text(f"Logging has been {'enabled' if new_status else 'disabled'}~ 💖")
 
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -94,15 +96,13 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     groups, users = get_stats()
-
-    # 🖼 Optional: Stats image
     try:
         await update.message.reply_photo(
-            photo="stats_image.jpg",  # Replace with your file or URL
+            photo="stats_image.jpg",
             caption="Here's your bot activity snapshot, master~ 💌"
         )
-    except Exception as e:
-        print("Stats image error:", e)
+    except:
+        pass
 
     await update.message.reply_text(
         f"📊 *Bot Stats*\n\n"
@@ -112,6 +112,29 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def delay(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    user = update.effective_user
+
+    if len(context.args) == 0:
+        delay = get_deletion_delay(chat.id)
+        await update.message.reply_text(f"⏱ Current deletion delay is *{delay} seconds*", parse_mode="Markdown")
+        return
+
+    if user.id not in ADMIN_IDS:
+        await update.message.reply_text("Only my master can change the delay! 😿")
+        return
+
+    try:
+        delay_val = int(context.args[0])
+        if delay_val < 0 or delay_val > 300:
+            raise ValueError("Out of range")
+        set_deletion_delay(chat.id, delay_val)
+        await update.message.reply_text(f"⏱ Delay updated to *{delay_val} seconds*", parse_mode="Markdown")
+    except:
+        await update.message.reply_text("Please enter a valid delay (0–300 seconds). 😅")
+
+
 async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     if not is_logging_enabled(chat.id):
@@ -119,7 +142,8 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     edited = update.edited_message
     if edited and edited.text:
-        await context.bot.send_message(
+        delay = get_deletion_delay(chat.id)
+        sent = await context.bot.send_message(
             chat_id=chat.id,
             text=f"✏️ *Edited Message Detected!*\n\n"
                  f"👤 User: `{edited.from_user.first_name}`\n"
@@ -127,6 +151,9 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
                  f"💬 Message: `{edited.text}`",
             parse_mode="Markdown"
         )
+        await asyncio.sleep(delay)
+        await edited.delete()
+        await sent.delete()
 
 
 def main():
@@ -136,9 +163,10 @@ def main():
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("togglelogging", toggle_logging))
     app.add_handler(CommandHandler("stats", stats))
+    app.add_handler(CommandHandler("delay", delay))
     app.add_handler(MessageHandler(filters.ALL & filters.UpdateType.EDITED_MESSAGE, handle_edit))
 
-    print(f"{BOT_NAME} is live~ 💮")
+    print(f"{BOT_NAME} is now running~ 💮")
     app.run_polling()
 
 
