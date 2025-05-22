@@ -36,8 +36,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• ғᴜʟʟʏ ᴄᴜsᴛᴏᴍɪᴢᴀʙʟᴇ ᴅᴇʟᴇᴛɪᴏɴ ᴛɪᴍᴇʀ\n\n"
         "➜ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴛᴏ ɢᴇᴛ sᴛᴀʀᴛᴇᴅ."
     )
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("➕ Add me to your group", url=f"https://t.me/{BOT_NAME}?startgroup=true")]])
-    await update.message.reply_photo("https://placehold.co/600x400?text=Start+Image", caption=text, reply_markup=keyboard, parse_mode="HTML")
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("➕ Add me to your group", url=f"https://t.me/edit_chanbot?startgroup=true")]])
+    await update.message.reply_photo("https://i.ibb.co/k6yjVLKb/photo-2025-05-20-05-17-05-7506392631883071524.jpg", caption=text, reply_markup=keyboard, parse_mode="HTML")
 
 # /ping
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -53,7 +53,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"💾 Disk: {disk.percent}%\n"
         f"⚙️ CPU: {cpu}%"
     )
-    await update.message.reply_photo("https://placehold.co/600x400?text=Ping+Image", caption=text, parse_mode="HTML")
+    await update.message.reply_photo("https://i.ibb.co/k6yjVLKb/photo-2025-05-20-05-17-05-7506392631883071524.jpg", caption=text, parse_mode="HTML")
 
 # /delay
 async def delay(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -109,7 +109,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     users = len(await get_all_users())
     chats = len(await get_all_chats())
-    await update.message.reply_photo("https://placehold.co/600x400?text=Stats", caption=f"📊 Users: {users}\n👥 Groups: {chats}")
+    await update.message.reply_photo("https://i.ibb.co/k6yjVLKb/photo-2025-05-20-05-17-05-7506392631883071524.jpg", caption=f"📊 Users: {users}\n👥 Groups: {chats}")
 
 # Handle edits
 async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
