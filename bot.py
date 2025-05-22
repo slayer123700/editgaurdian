@@ -56,7 +56,6 @@ sync def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="HTML"
             )
     except:
-        await update.message.reply_text("Welcome! Media missing. Bot is active.")d)
 
 
 # /ping command
