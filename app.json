@@ -12,15 +12,15 @@
   ],
   "env": {
     "BOT_TOKEN": {
-      "description": "Your bot token from @BotFather",
+      "description": "7671461535:AAGOPau3s4b6g2pbJm5sRz2iqbhN0K5tfbA",
       "required": true
     },
     "OWNER_ID": {
-      "description": "Your Telegram user ID to receive bot notifications and access admin commands.",
+      "description": "6018803920",
       "required": true
     },
     "MONGO_URI": {
-      "description": "MongoDB URI to store user, group, and config data.",
+      "description": "mongodb+srv://musicbotxd:musicbotxd@cluster0.6thyk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
       "required": true
     }
   },
